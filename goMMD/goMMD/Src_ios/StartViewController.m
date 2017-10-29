@@ -1,9 +1,10 @@
 //
-//  DetailViewController.m
-//  app-master-detail
+//  StartViewController.m
+//  goMMD
 //
-//  Created by Rocky on 2013/03/22.
-//  Copyright (c) 2013年 twincle4u. All rights reserved.
+//  Created by Rocky on 2017/10/28.
+//  Copyright (c) 2017 rockyappdev. All rights reserved.
+//
 //
 
 #import "StartViewController.h"

@@ -1,9 +1,10 @@
 //
-//  MasterViewController.h
-//  MMD4U
+//  EditViewController.h
+//  goMMD
 //
-//  Created by Rocky on 2013/03/21.
-//  Copyright (c) 2013年 twincle4u. All rights reserved.
+//  Created by Rocky on 2017/10/28.
+//  Copyright (c) 2017 rockyappdev. All rights reserved.
+//
 //
 
 #import <MediaPlayer/MediaPlayer.h>
