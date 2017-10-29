@@ -1,4 +1,4 @@
-# LiveStageMMD-GLKit-GLES2
+# goMMD
 <ul>
 <li>goMMD</li>
     <ul>
@@ -70,7 +70,20 @@ MikuMikuDanceのモデル、ステージ、モーションのzipファイルを�
 <p>
 実機へアプリをインストールした場合、iTuneを使ってモデルやモーションの.zipファイルを
 アプリ内へコピーして下さい。
-
+iTune
+  実機をセレクト
+　　　概要
+　　　ミュージック
+　　　ムービー
+　　　テレビ番組
+　　　Podcast
+　　　ブック
+　　　写真
+　　　情報
+　　　ファイル共有   <-- セレクト
+　　　　　　App         <App>の書類
+　　　　　　goMMD       goMMDの書類
+　　　　　　　　　　　　　このフレームに、.pmdや.vmdの入ったフォルダーの.zipをコピーする
 
 <p>
 iOS開発の詳細は以下のサイトを見て下さい
