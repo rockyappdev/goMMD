@@ -1,4 +1,5 @@
 # goMMD
+# iOS iPhone/iPad MMD Player
 <ul>
 <li>goMMD</li>
     <ul>
