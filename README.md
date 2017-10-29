@@ -68,6 +68,7 @@ MikuMikuDanceのモデル、ステージ、モーションのzipファイルを�
 </pre>
 
 <p>
+<pre>
 実機へアプリをインストールした場合、iTuneを使ってモデルやモーションの.zipファイルを
 アプリ内へコピーして下さい。
 iTune
@@ -84,7 +85,7 @@ iTune
 　　　　　　App         <App>の書類
 　　　　　　goMMD       goMMDの書類
 　　　　　　　　　　　　　このフレームに、.pmdや.vmdの入ったフォルダーの.zipをコピーする
-
+</pre>
 <p>
 iOS開発の詳細は以下のサイトを見て下さい
 <pre>
