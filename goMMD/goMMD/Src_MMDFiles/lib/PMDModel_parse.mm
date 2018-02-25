@@ -370,7 +370,7 @@ bool PMDModel::parsePMD(const unsigned char *data, unsigned long size, ScenarioD
                    NSLog(@"***** could not allocate pData for malloc(%ld)", imgLen);
                } else {
                    name = (char*)[fpath cStringUsingEncoding:NSUTF8StringEncoding];
-                   [nsData getBytes:pData];
+                   [nsData getBytes:pData length:imgLen];
                    if (m_localToonTexture[j].load(pData,imgLen,name) == true) {
                        m_toonTextureID[j] = m_localToonTexture[j].getID();
                        NSLog(@"xxxxxxx m_toonTextureID[%d]=texID[%d][%@]", j, m_toonTextureID[j], fpath);
@@ -443,7 +443,7 @@ bool PMDModel::parsePMD(const unsigned char *data, unsigned long size, ScenarioD
                if (pData == NULL) {
                    NSLog(@"***** could not allocate pData for malloc(%ld)", imgLen);
                } else {
-                   [nsData getBytes:pData];
+                   [nsData getBytes:pData length:imgLen];
                    if (m_localToonTexture[j].load(pData,imgLen,name) == true) {
                        m_toonTextureID[j] = m_localToonTexture[j].getID();
                        NSLog(@"xxxxxxx m_toonTextureID[%d]=texID[%d][%@]", j, m_toonTextureID[j], fpath);

@@ -418,6 +418,11 @@
     return _currentModelPath;
 }
 
+-(NSString*)getCurrentModelExt
+{
+    return [_currentModelPath pathExtension];
+}
+
 -(NSString*)getCurrentMotionPath
 {
     return _currentMotionPath;

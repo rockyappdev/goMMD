@@ -44,6 +44,7 @@
 #define MOTIONCONTROLLER_BONEENDMARGINFRAME 20.0f /* frame lengths for bone motion smoothing at loop tail */
 #define MOTIONCONTROLLER_FACEENDMARGINFRAME 6.0f  /* frame lengths for face motion smoothing at loop tail */
 
+
 /* motions's status at last call */
 enum {
    MOTION_STATUS_RUNNING, /* running */
@@ -100,7 +101,9 @@ class MotionManager
 {
 private:
 
-   PMDModel *m_pmd;                     /* assigned model */
+    PMDModel *m_pmd;                     /* assigned model */
+    MMDModel *m_model;
+    
    MotionPlayer *m_playerList;          /* list of motion players running */
    float m_beginningNonControlledBlend; /* at motion start, bones/faces not controlled in base motion will be reset within this frame */
 
@@ -118,13 +121,15 @@ public:
    /* MotionManager: constructor */
     MotionManager( void );
     MotionManager(PMDModel *pmd);
+    MotionManager(MMDModel *model);
 
    /* ~MotionManager: destructor */
    ~MotionManager();
 
     /* setup: initialize and setup motion manager */
     void setup(PMDModel *pmd);
-    
+    void setup(MMDModel *model);
+
     /* startMotionSub: initialize a motion */
     void startMotionSub(VMD *vmd, MotionPlayer *m);
     

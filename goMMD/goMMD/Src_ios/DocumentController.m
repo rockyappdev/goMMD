@@ -586,7 +586,7 @@ static NSString *MOTIONGROUPLISTFILENAME = @"__gommd-motiongroup.xml";
                     continue;
                 }
             }
-            if ([file.pathExtension isEqualToString:@"pmd"] || [file.pathExtension isEqualToString:@"pmxxx"]) {
+            if ([file.pathExtension isEqualToString:@"pmd"] || [file.pathExtension isEqualToString:@"pmx"]) {
                 [listDictOfModel setValue:detailDict forKey:file];
                 //NSLog(@"... modelList: zipPath=[%@] file=[%@]", zipPath, file);
             } else if ([file.pathExtension isEqualToString:@"vmd"]) {

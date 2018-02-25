@@ -406,6 +406,7 @@
             ipodPlayer = nil;
         }
 
+        NSLog(@"... updatescene");
         mmdagent->updateScene();
         mmdagent->procHoldMessage(true); // hold until motion and music in sync
 
@@ -900,6 +901,7 @@
     CGFloat diffx, diffy;
     
 	if( touchCount == 0){
+        // single touch begin
 		touchCount = [[touches allObjects] count];
 		for (i = 0; i < touchCount; i++) {
 			CGPoint pt = [[[touches allObjects] objectAtIndex:i] locationInView:self.view];
@@ -907,80 +909,83 @@
             startTouchTime =  [self getTime];
 		}
 	} else if([[touches allObjects] count] == 2 && touchCount < 2){
+        // double touch begin
 		touchCount = [[touches allObjects] count];
 		for (i = 0; i < touchCount; i++) {
 			CGPoint pt = [[[touches allObjects] objectAtIndex:i] locationInView:self.view];
 			startPoints[i] = pt;
 		}
  	}else {
+        // touch end
 		if(!(touchCount == 2 && [[touches allObjects] count] < 2)){
+            // signle touch and move
             endTouchTime = [self getTime];
 			for (i = 0; i < [[touches allObjects] count]; i++) {
 				CGPoint pt = [[[touches allObjects] objectAtIndex:i] locationInView:self.view];
 				endPoints[i] = pt;
 			}
 			
-			if(touchCount==1){
-				diffx = endPoints[0].x - startPoints[0].x;
-				diffy = endPoints[0].y - startPoints[0].y;
-                
-				if( diffx*diffx > diffy*diffy){
-                    if ([_viewSegCtrl selectedSegmentIndex] == 0) {
-                        if (endTouchTime - startTouchTime <= 0.3 && abs(diffx) > 30) {
-                            diffx += (diffx < 0 ? 30 : -30);
-                            rotateDy += -diffx * 0.005; //0.025;
-                        } else {
-                            angley = 0.2*diffx;
-                            
-                            rotateDx = rotateDy = rotateDz = 0.0;
-                        }
-                    } else {
-                        int iyangle = abs(mmdagent->getAngleY()) / 45;
-                        //NSLog(@"... mmdagent yangle=[%d]", iyangle);
-                        if (iyangle >= 1 && iyangle <= 2) {
-                            tranZ = -0.1*diffx;
-                        } else if (iyangle >= 5 && iyangle <= 6) {
-                            tranZ = -0.1*diffx;
-                        } else if (iyangle >=3 && iyangle <= 4) {
-                            tranX = 0.1*diffx;
-                        } else {
-                            tranX = -0.1*diffx;
-                        }
-                        
-                        rotateDx = rotateDy = rotateDz = 0.0;
-                    }
-                    
-				}else {
+            diffx = endPoints[0].x - startPoints[0].x;
+            diffy = endPoints[0].y - startPoints[0].y;
+            int iyangle = (int)mmdagent->getAngleY();
+            iyangle = iyangle % 360;
+            if (iyangle < 0) iyangle += 360;
+            iyangle = (iyangle / 45) % 8;
+            int ixangle = (int)mmdagent->getAngleX();
+            ixangle = ixangle % 360;
+            if (ixangle < 0) ixangle += 360;
+            ixangle = (ixangle / 45) % 8;
+            NSLog(@"... dragged xangle=[%d] yangle=[%d] diffx=[%f] diffy=[%f]", ixangle, iyangle, diffx, diffy);
 
-                    if ([_viewSegCtrl selectedSegmentIndex] == 0) {
-                        if (endTouchTime - startTouchTime <= 0.3 && abs(diffy) > 40) {
-                            diffy += (diffy < 0 ? 40 : -40);
-                            rotateDx += -diffy * 0.005; // 0.015;
+            if(touchCount==1){
+                //
+                if ([_viewSegCtrl selectedSegmentIndex] == 0) {
+                    if ((ixangle >= 0 && ixangle <= 1) || (ixangle >= 6 && ixangle <= 7)) {
+                        // screen front(south) back(north) left(west) right(east) top(top) bottom(bottom)
+                        if (abs(diffx) > abs(diffy)) {
+                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffx) > 20) {
+                                diffx += (diffx < 0 ? 30 : -30);
+                                rotateDy += -diffx * 0.005; //0.025;
+                                NSLog(@".....  rotateDy = [%f]", rotateDy);
+                            } else {
+                                angley = 0.2*diffx;
+                                NSLog(@".....  angley = [%f]", angley);
+                            }
                         } else {
-                            anglex = 0.2*diffy;
-                            
-                            rotateDx = rotateDy = rotateDz = 0.0;
+                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffy) > 20) {
+                                diffy += (diffy < 0 ? 40 : -40);
+                                rotateDx += -diffy * 0.005; // 0.015;
+                                NSLog(@".....  rotateDx = [%f]", rotateDx);
+                            } else {
+                                anglex = 0.2*diffy;
+                                NSLog(@".....  anglex = [%f]", anglex);
+                            }
                         }
                     } else {
-                        //tranY = 0.2*diffy;
-                        int ixangle = abs(mmdagent->getAngleX()) / 45;
-                        //NSLog(@"... mmdagent xangle=[%f", xangle);
-                        if (ixangle >= 1 && ixangle <= 2) {
-                            tranZ = -0.1*diffy;
-                        } else if (ixangle >= 5 && ixangle <= 6) {
-                            tranZ = -0.1*diffy;
-                        } else if (ixangle >=3 && ixangle <= 4) {
-                            tranY = -0.1*diffy;
+                        // screen front(north) back(south) left(west) right(east) top(bottom) bottom(top)
+                        if (abs(diffx) > abs(diffy)) {
+                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffx) > 20) {
+                                diffx += (diffx < 0 ? 30 : -30);
+                                rotateDy += -diffx * 0.005; //0.025;
+                                NSLog(@".....  rotateDy = [%f]", rotateDy);
+                            } else {
+                                angley = 0.2*diffx;
+                                NSLog(@".....  angley = [%f]", angley);
+                            }
                         } else {
-                            tranY = 0.1*diffy;
+                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffy) > 20) {
+                                diffy += (diffy < 0 ? 40 : -40);
+                                rotateDx += -diffy * 0.005; // 0.015;
+                                NSLog(@".....  rotateDx = [%f]", rotateDx);
+                            } else {
+                                anglex = 0.2*diffy;
+                                NSLog(@".....  anglex = [%f]", anglex);
+                            }
                         }
-                        
-                        rotateDx = rotateDy = rotateDz = 0.0;
                     }
-                    
-				}
-				
+                }
 			}else {
+                // two finger open and close
 				float dist = ( sqrt(pow((startPoints[0].x - startPoints[1].x),2)+
                                     pow((startPoints[0].y - startPoints[1].y),2))
                               -
@@ -988,46 +993,202 @@
                                    pow((endPoints[0].y -endPoints[1].y),2))
                               )*0.1;
                 
-                if (dist > 0.1 || dist < -0.1) {
+                if (dist > 0.2 || dist < -0.2) {
                     // zoom in-out
+                    NSLog(@"... zoom in-out dist=[%f]", dist);
                     mmdagent->addDistance(dist);
                 } else {
                     // drag side way
-                    diffx = endPoints[0].x - startPoints[0].x;
-                    diffy = endPoints[0].y - startPoints[0].y;
-                    
-                    if( diffx*diffx > diffy*diffy){
-                        
-                        int iyangle = abs(mmdagent->getAngleY()) / 45;
-                        //NSLog(@"... mmdagent yangle=[%d]", iyangle);
-                        if (iyangle >= 1 && iyangle <= 2) {
-                            tranZ = -0.1*diffx;
-                        } else if (iyangle >= 5 && iyangle <= 6) {
-                            tranZ = -0.1*diffx;
-                        } else if (iyangle >=3 && iyangle <= 4) {
-                            tranX = 0.1*diffx;
-                        } else {
-                            tranX = -0.1*diffx;
-                        }
 
-                    } else {
-                        //tranY = 0.2*diffy;
-                        int ixangle = abs(mmdagent->getAngleX()) / 45;
-                        //NSLog(@"... mmdagent xangle=[%f", xangle);
-                        if (ixangle >= 1 && ixangle <= 2) {
-                            tranZ = -0.1*diffy;
-                        } else if (ixangle >= 5 && ixangle <= 6) {
-                            tranZ = -0.1*diffy;
-                        } else if (ixangle >=3 && ixangle <= 4) {
-                            tranY = -0.1*diffy;
-                        } else {
-                            tranY = 0.1*diffy;
-                        }
-                        
-                    }
-
+                    // stop auto rotation
                     rotateDx = rotateDy = rotateDz = 0.0;
 
+                    if (ixangle == 0 || ixangle == 7) {
+                        // initial view
+                        if (iyangle == 0 || iyangle == 7) {
+                            // screen front(south) back(north) left(west) right(east) top(top) bottom(bottom)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(west) <-> right(east)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(top) <-> down(bottom)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 1 || iyangle == 2) {
+                            // screen front(west) back(east) left(north) right(south) top(top) bottom(bottom)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(north) <-> right(south)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranZ = [%f](-0.1*diffx)", tranZ);
+                            } else {
+                                // move up(top) <-> down(bottom)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 3 || iyangle == 4) {
+                            // screen front(north) back(south) left(east) right(west) top(top) bottom(bottom)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(east) <-> right(west)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(top) <-> down(bottom)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 5 || iyangle == 6) {
+                            // screen front(east) back(west) left(south) right(north) top(top) bottom(bottom)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(south) <-> right(north)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(top) <-> down(bottom)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        }
+                    } else if (ixangle == 1 || ixangle == 2) {
+                        if (iyangle == 0 || iyangle == 7) {
+                            // screen front(up) back(down) left(west) right(east) top(north) bottom(south)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(west) <-> right(east)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(north) <-> down(south)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                           }
+                        } else if (iyangle == 1 || iyangle == 2) {
+                            // screen front(west) back(east) left(down) right(up) top(north) bottom(south)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(bottom) <-> right(top)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranY = [%f](-0.1*diffx)", tranY);
+                            } else {
+                                // move up(north) <-> down(south)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 3 || iyangle == 4) {
+                            // screen front(down) back(up) left(east) right(west) top(north) bottom(south)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(east) <-> right(west)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(north) <-> down(south)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 5 || iyangle == 6) {
+                            // screen front(east) back(west) left(up) right(down) top(north) bottom(south)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(top) <-> right(bottom)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(north) <-> down(south)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        }
+                    } else if (ixangle == 3 || ixangle == 4) {
+                        if (iyangle == 0 || iyangle == 7) {
+                            // screen front(north) back(south) left(west) right(east) top(down) bottom(up)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(west) <-> right(east)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(bottom) <-> down(top)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 1 || iyangle == 2) {
+                            // screen front(west) back(east) left(south) right(north) top(down) bottom(up)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(south) <-> right(north)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(bottom) <-> down(top)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 3 || iyangle == 4) {
+                            // screen front(south) back(north) left(east) right(west) top(down) bottom(up)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(east) <-> right(west)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(bottom) <-> down(top)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 5 || iyangle == 6) {
+                            // screen front(east) back(west) left(north) right(south) top(down) bottom(up)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(north) <-> right(south)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(bottom) <-> down(top)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        }
+                    } else if (ixangle == 5 || ixangle == 6) {
+                        if (iyangle == 0 || iyangle == 7) {
+                            // screen front(down) back(up) left(west) right(east) top(south) bottom(north)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(west) <-> right(east)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(south) <-> down(north)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 1 || iyangle == 2) {
+                            // screen front(west) back(east) left(top) right(bottom) top(south) bottom(north)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(top) <-> right(bottom)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(south) <-> down(north)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 3 || iyangle == 4) {
+                            // screen front(up) back(down) left(east) right(west) top(south) bottom(north)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(east) <-> right(west)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(south) <-> down(north)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        } else if (iyangle == 5 || iyangle == 6) {
+                            // screen front(east) back(west) left(bottom) right(top) top(south) bottom(north)
+                            if( abs(diffx) > abs(diffy)){
+                                // move left(bottom) <-> right(top)
+                                tranX = -0.1*diffx;
+                                NSLog(@".....  tranX = [%f](-0.1*diffx)", tranX);
+                            } else {
+                                // move up(south) <-> down(north)
+                                tranY = 0.1*diffy;
+                                NSLog(@".....  tranY = [%f](0.1*diffy)", tranY);
+                            }
+                        }
+                    }
                 }
         
 			}
@@ -1042,12 +1203,13 @@
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    int i;
-    
+    //int i;
+
     if (endTouchTime == 0.0) {
         endTouchTime = [self getTime];
     }
     
+    /* for debugging purpose
     NSLog(@"touchCount %ld", (long)touchCount);
     for (i = 0; i < touchCount; i++) {
         NSLog(@"startPos x,y=%@", NSStringFromCGPoint(startPoints[i]));
@@ -1062,6 +1224,7 @@
     for (i = 0; i < touchCount; i++) {
         NSLog(@"endPos x,y=%@", NSStringFromCGPoint(endPoints[i]));
     }
+     */
     
     NSInteger tapCount = [[touches anyObject] tapCount];
     
@@ -1076,8 +1239,9 @@
 
 - (void)singleTap
 {
+    // wait delay to determin single or double tap
     if (!singleTapYes) { return; }
-    
+    // stop rotation
     if (touchCount == 0) {
         rotateDx = rotateDy = rotateDz = 0.0;
     }
@@ -1086,7 +1250,7 @@
 
 - (void)doubleTap
 {
-    // switch FullScreen, hide top and bottom menu bars
+    // hide / show top and bottom menu bars
     if (fullScreen) {
         [self hideMenuBarsYesNo:NO duration:0.0f];
     } else {

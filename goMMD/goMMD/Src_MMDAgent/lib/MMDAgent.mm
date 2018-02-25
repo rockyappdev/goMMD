@@ -291,6 +291,7 @@ bool MMDAgent::addModel(const char *modelAlias, ScenarioData *_scenarioData,
    if (baseModelAlias) {
       baseID = findModelAlias(baseModelAlias);
       if (baseID < 0) {
+        NSLog(@"Error: addModel:  [%s] is not found.", baseModelAlias);
          m_logger->log("Error: addModel: %s is not found.", baseModelAlias);
          return false;
       }
@@ -300,10 +301,12 @@ bool MMDAgent::addModel(const char *modelAlias, ScenarioData *_scenarioData,
          assignBone = m_models[baseID].getPMDModel()->getCenterBone();
       }
       if (assignBone == NULL) {
-         if (baseBoneName)
-            m_logger->log("Error: addModel: %s is not exist on %s.", baseBoneName, baseModelAlias);
-         else
+          if (baseBoneName) {
+              NSLog(@"Error: addModel:  %s  is not exist on %s.", baseBoneName, baseModelAlias);
+              m_logger->log("Error: addModel: %s is not exist on %s.", baseBoneName, baseModelAlias);
+          } else {
             m_logger->log("Error: addModel: %s don't have center bone.", baseModelAlias);
+          }
          return false;
       }
       assignObject = &m_models[baseID];
@@ -321,6 +324,7 @@ bool MMDAgent::addModel(const char *modelAlias, ScenarioData *_scenarioData,
       /* check the same alias */
       name = MMDAgent_strdup(modelAlias);
       if (findModelAlias(name) >= 0) {
+          NSLog(@"Error: addModel: model alias \"%s\" is already used.", name);
          m_logger->log("Error: addModel: model alias \"%s\" is already used.", name);
          free(name);
          return false;
@@ -342,7 +346,8 @@ bool MMDAgent::addModel(const char *modelAlias, ScenarioData *_scenarioData,
                           usePhysics, useCartoonRendering, textureLib,
                            m_option))
     {
-        m_logger->log("Error: addModel: %s cannot be loaded.", fileName);
+        NSLog(@"Error: addModel: cannot be loaded [%@]", [_scenarioData getCurrentModelPath]);
+        //m_logger->log("Error: addModel: %s cannot be loaded.", fileName);
         m_models[id].release();
         free(name);
         return false;

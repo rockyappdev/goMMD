@@ -116,7 +116,8 @@ void PMDModel::renderModel2(const float* lightDirection)
 #endif /* !MMDFILES_CONVERTCOORDINATESYSTEM */
 
     //ES2
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_vboBufStatic);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboBufElement);
@@ -146,8 +147,9 @@ void PMDModel::renderModel2(const float* lightDirection)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     //ES2
-    glCullFace(GL_CCW);
+    //glCullFace(GL_CCW);
     //glCullFace(GL_CW);
+
 
     /* activate texture unit 0 */
     glActiveTexture(GL_TEXTURE0);
@@ -253,10 +255,12 @@ void PMDModel::renderModel2(const float* lightDirection)
         
         /* disable face culling for transparent materials */
         // ES2
+        /*
         if (m->getAlpha() < 1.0f)
             glDisable(GL_CULL_FACE);
         else
             glEnable(GL_CULL_FACE);
+         */
 
         /* if using multiple texture units, set current unit to 0 */
         if (m_toon || m_hasMultipleSphereMap) {
@@ -437,8 +441,8 @@ void PMDModel::renderModel2(const float* lightDirection)
     
     //glDisable(GL_TEXTURE_2D);
     //ES2
-    glEnable(GL_CULL_FACE);
-    
+    //glEnable(GL_CULL_FACE);
+
 #ifndef MMDFILES_CONVERTCOORDINATESYSTEM
     
     //ES2 glCullFace(GL_BACK);
@@ -547,7 +551,7 @@ void PMDModel::renderForShadow2()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     
    //ES2
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
 }
 
 /* PMDModel::renderForPick: render for pick */

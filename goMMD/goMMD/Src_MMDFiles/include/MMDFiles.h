@@ -90,9 +90,13 @@
 #include "SystemTexture.h"
 #include "PMDModel.h"
 
+#include "MMDModel.h"
+
 #include "MotionController.h"
 #include "MotionManager.h"
 
 #include "CameraController.h"
+
+
 
 #endif /* __mmdfiles_h__ */

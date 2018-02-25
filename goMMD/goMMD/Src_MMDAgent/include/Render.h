@@ -75,7 +75,8 @@ private:
    int m_width;             /* window width */
    int m_height;            /* winodw height */
 
-   btVector3 m_trans;       /* view trans vector */
+    btVector3 m_trans_base;       /* view trans vector */
+    btVector3 m_trans_add;       /* view trans vector */
    btVector3 m_angle;       /* view angles */
    btQuaternion m_rot;      /* view rotation */
    float m_distance;        /* view distance */
@@ -85,10 +86,14 @@ private:
    btQuaternion m_currentRot;    /* current view rotation */
    float m_currentDistance;      /* current view distance */
    float m_currentFovy;          /* current view fovy */
-   btTransform m_transMatrix;    /* current trans vector + rotation matrix */
-   btTransform m_transMatrixInv; /* current trans vector + inverse of rotation matrix */
-   btScalar m_rotMatrix[16];     /* current rotation + OpenGL rotation matrix */
-   btScalar m_rotMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
+   btTransform m_transMatrix;    /* current trans vector matrix */
+   btTransform m_transMatrixInv; /* current trans vector + inverse matrix */
+    btTransform m_rotMatrix;    /* current trans(0.0) vector + rotation matrix */
+    btTransform m_rotMatrixInv; /* current trans(0.0) vector + inverse of rotation matrix */
+   btScalar m_rotGLMatrix[16];     /* current rotation + OpenGL rotation matrix */
+   btScalar m_rotGLMatrixInv[16];  /* current rotation + inverse of OpenGL rotation matrix */
+    btScalar m_transGLMatrix[16];     /* current trans + OpenGL rotation matrix */
+    btScalar m_transGLMatrixInv[16];  /* current trans + inverse of OpenGL rotation matrix */
 
     int   m_jumpState;
     float m_jumpHeight;

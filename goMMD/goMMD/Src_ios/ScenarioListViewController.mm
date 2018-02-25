@@ -338,11 +338,34 @@
         NSLog(@"... ScenarioListViewController -> MMDViewController starting");
         
         if (mmdViewController == nil) {
-            if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
-                mmdViewController = [[MMDViewController alloc] initWithNibName:@"MMDViewController_iPhone" bundle:nil];
+            // iphoneX        1125 x 2436 -> 375 x 812
+            // iPhone[67]Plus 1080 x 1920 -> 414 x 736
+            // iPhone[67]     750 x 1334  -> 375 x 667
+            // iPhone5        640 x 1136  -> 320 x 568
+            int w, h, x;
+            CGSize nativeSize = UIScreen.mainScreen.nativeBounds.size;
+            w =  int(nativeSize.width);
+            h =  int(nativeSize.height);
+            if (w > h) { x = w; w = h; h = x; }
+            NSLog(@"nativeSize = [%d x %d]", w, h);
+            NSString* nibName;
+            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+                switch (w) {
+                    case 640:
+                    case 750:
+                    case 1080:
+                    case 1125:
+                        nibName = [NSString stringWithFormat:@"MMDViewController_iPhone%dx%d", w, h];
+                        break;
+                    default:
+                        nibName = @"MMDViewController_iPhone";
+                        break;
+                }
             } else {
-                mmdViewController = [[MMDViewController alloc] initWithNibName:@"MMDViewController_iPad" bundle:nil];
+                nibName = @"MMDViewController_iPad";
             }
+            mmdViewController = [[MMDViewController alloc] initWithNibName:nibName bundle:nil];
+            NSLog(@"... nibName = [%@]", nibName);
         }
         
         [_paramDict setValue:@"" forKey:@"paramFrom"];

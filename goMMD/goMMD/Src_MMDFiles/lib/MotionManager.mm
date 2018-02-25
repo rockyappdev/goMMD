@@ -105,6 +105,13 @@ void MotionManager::setup(PMDModel * pmd)
    m_pmd = pmd;
 }
 
+/* MotionManager::setup: initialize and setup motion manager */
+void MotionManager::setup(MMDModel * model)
+{
+    clear();
+    m_model = model;
+}
+
 /* MotionManager::startMotionSub: initialize a motion */
 void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
 {
@@ -165,6 +172,7 @@ void MotionManager::startMotionSub(VMD * vmd, MotionPlayer * m)
 void MotionManager::initialize()
 {
    m_pmd = NULL;
+    m_model = NULL;
    m_playerList = NULL;
    m_beginningNonControlledBlend = 0.0f;
 }
@@ -189,6 +197,13 @@ MotionManager::MotionManager(PMDModel * pmd)
 {
    initialize();
    setup(pmd);
+}
+
+/* MotionManager::MotionManager: constructor */
+MotionManager::MotionManager(MMDModel * model)
+{
+    initialize();
+    setup(model);
 }
 
 /* MotionManager::~MotionManager: destructor */

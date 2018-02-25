@@ -138,6 +138,7 @@
 -(NSString*)getZipPathOfModelPath:(NSString*)modelPath;
 -(NSString*)getZipPathOfMotionPath:(NSString*)motionPath;
 -(NSString*)getCurrentModelPath;
+-(NSString*)getCurrentModelExt;
 -(NSString*)getCurrentMotionPath;
 -(NSString*)getCurrentScenarioName;
 -(NSString*)getCurrentScenarioKey;

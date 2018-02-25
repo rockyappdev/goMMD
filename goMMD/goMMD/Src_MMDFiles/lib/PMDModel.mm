@@ -283,9 +283,6 @@ bool PMDModel::load( ScenarioData *_scenarioData, void *_bullet, void *_systex)
     
     ret = parse(data, (unsigned long) size, bullet, systex, _scenarioData);
     
-   /* release memory for reading */
-   //free(data);
-
    return ret;
 }
 

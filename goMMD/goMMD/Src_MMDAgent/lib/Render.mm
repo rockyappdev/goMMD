@@ -82,14 +82,32 @@ void Render::applyProjectionMatrix()
 }
 
 /* Render::updateModelViewMatrix: update model view matrix */
+/** orig
 void Render::updateModelViewMatrix()
 {
-   m_transMatrix.setIdentity();
-   m_transMatrix.setRotation(m_currentRot);
-   m_transMatrix.setOrigin(m_transMatrix * ( - m_currentTrans) - btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(m_currentDistance)));
-   m_transMatrixInv = m_transMatrix.inverse();
-   m_transMatrix.getOpenGLMatrix(m_rotMatrix);
-   m_transMatrixInv.getOpenGLMatrix(m_rotMatrixInv);
+    m_transMatrix.setIdentity();
+    m_transMatrix.setRotation(m_currentRot);
+    m_transMatrix.setOrigin(m_transMatrix * ( - m_currentTrans) - btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(m_currentDistance)));
+    m_transMatrixInv = m_transMatrix.inverse();
+    m_transMatrix.getOpenGLMatrix(m_rotMatrix);
+    m_transMatrixInv.getOpenGLMatrix(m_rotMatrixInv);
+}
+***/
+
+void Render::updateModelViewMatrix()
+{
+    // rotation matrix
+    m_rotMatrix.setIdentity();
+    m_rotMatrix.setRotation(m_currentRot);
+    m_rotMatrixInv = m_transMatrix.inverse();
+    m_rotMatrix.getOpenGLMatrix(m_rotGLMatrix);
+    m_rotMatrixInv.getOpenGLMatrix(m_rotGLMatrixInv);
+    // trans matrix
+    m_transMatrix.setIdentity();
+    m_transMatrix.setOrigin(m_transMatrix * ( - m_currentTrans) - btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(m_currentDistance)));
+    m_transMatrixInv = m_transMatrix.inverse();
+    m_transMatrix.getOpenGLMatrix(m_transGLMatrix);
+    m_transMatrixInv.getOpenGLMatrix(m_transGLMatrixInv);
 }
 
 /* Render::updateTransRotMatrix:  update trans and rotation matrix */
@@ -100,14 +118,14 @@ bool Render::updateTransRotMatrix(double ellapsedTimeForMove)
    btQuaternion rot;
 
    /* if no difference, return */
-   if (m_currentRot == m_rot && m_currentTrans == m_trans)
+   if (m_currentRot == m_rot && m_currentTrans == m_trans_add)
       return false;
 
    if (m_viewMoveTime == 0.0 || m_viewControlledByMotion == true) {
    
        /* immediately apply the target */
        m_currentRot = m_rot;
-       m_currentTrans = m_trans;
+       m_currentTrans = m_trans_add;
 
    } else if (m_viewMoveTime > 0.0) {
        
@@ -116,9 +134,9 @@ bool Render::updateTransRotMatrix(double ellapsedTimeForMove)
       /* constant move */
       if (!RENDER_USE_LERP || ellapsedTimeForMove >= m_viewMoveTime) {
          m_currentRot = m_rot;
-         m_currentTrans = m_trans;
+         m_currentTrans = m_trans_add;
       } else {
-         m_currentTrans = m_viewMoveStartTrans.lerp(m_trans, btScalar(ellapsedTimeForMove / m_viewMoveTime));
+         m_currentTrans = m_viewMoveStartTrans.lerp(m_trans_add, btScalar(ellapsedTimeForMove / m_viewMoveTime));
           if (m_jumpState != 0) {
               rot = m_rot;
               rot -= m_currentRot;
@@ -139,7 +157,7 @@ bool Render::updateTransRotMatrix(double ellapsedTimeForMove)
        // NSLog(@"... Render::updateTransRotMatrix m_viewMoveTime == 0.0");
       
        /* calculate difference */
-      trans = m_trans;
+      trans = m_trans_add;
       trans -= m_currentTrans;
       diff1 = trans.length2();
       rot = m_rot;
@@ -147,9 +165,9 @@ bool Render::updateTransRotMatrix(double ellapsedTimeForMove)
       diff2 = rot.length2();
 
       if (RENDER_USE_LERP && diff1 > RENDER_MINMOVEDIFF)
-         m_currentTrans = m_currentTrans.lerp(m_trans, btScalar(1.0f - RENDER_MOVESPEEDRATE)); /* current * 0.9 + target * 0.1 */
+         m_currentTrans = m_currentTrans.lerp(m_trans_add, btScalar(1.0f - RENDER_MOVESPEEDRATE)); /* current * 0.9 + target * 0.1 */
       else
-         m_currentTrans = m_trans;
+         m_currentTrans = m_trans_add;
 
        if (RENDER_USE_LERP && diff2 > RENDER_MINSPINDIFF)
          m_currentRot = m_currentRot.slerp(m_rot, btScalar(1.0f - RENDER_SPINSPEEDRATE)); /* current * 0.9 + target * 0.1 */
@@ -598,7 +616,7 @@ void Render::renderSceneShadowMap(PMDObject *objs, const int *order, int num, St
 void Render::renderScene(PMDObject *objs, const int *order, int num, Stage *stage, bool useMMDLikeCartoon, bool useCartoonRendering, float lightIntensity, const float *lightDirection, const float *lightColor, float shadowMappingFloorDensity)
 {
    short i;
-   bool toonLight = true;
+   // bool toonLight = true;
 
    /* clear rendering buffer */
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -607,7 +625,7 @@ void Render::renderScene(PMDObject *objs, const int *order, int num, Stage *stag
    glEnable(GL_BLEND);
 
    /* set model viwe matrix */
-    PVRTMat4 mat4 = PVRTMat4(m_rotMatrix);
+    PVRTMat4 mat4 = PVRTMat4(m_transGLMatrix) * PVRTMat4(m_rotGLMatrix);
     m_mmdagent->setMatView(mat4);
     
    /* stage and shadhow */
@@ -663,13 +681,14 @@ void Render::initialize()
 {
    m_width = 0;
    m_height = 0;
-   m_trans = btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(0.0f));
+   m_trans_base = btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(0.0f));
+    m_trans_add = m_trans_base;
    m_angle = btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(0.0f));
    updateRotationFromAngle();
    m_distance = 100.0f;
     m_fovy = 8.0f; // 16.0f;
 
-   m_currentTrans = m_trans;
+   m_currentTrans = m_trans_add;
    m_currentRot = m_rot;
    m_currentDistance = m_distance;
    m_currentFovy = m_fovy;
@@ -795,7 +814,7 @@ int Render::getHeight()
 void Render::resetCameraView(const float *trans, const float *angle, float distance, float fovy)
 {
    m_angle = btVector3(btScalar(angle[0]), btScalar(angle[1]), btScalar(angle[2]));
-   m_trans = btVector3(btScalar(trans[0]), btScalar(trans[1]), btScalar(trans[2]));
+   m_trans_add = btVector3(btScalar(trans[0]), btScalar(trans[1]), btScalar(trans[2]));
    m_distance = distance;
    m_fovy = fovy;
    updateRotationFromAngle();
@@ -805,7 +824,7 @@ void Render::resetCameraView(const float *trans, const float *angle, float dista
 void Render::setCameraFromController(CameraController *c)
 {
    if (c != NULL) {
-      c->getCurrentViewParam(&m_distance, &m_trans, &m_angle, &m_fovy);
+      c->getCurrentViewParam(&m_distance, &m_trans_add, &m_angle, &m_fovy);
       updateRotationFromAngle();
       m_viewControlledByMotion = true;
    } else
@@ -827,7 +846,7 @@ void Render::setViewMoveTimer(double sec)
 /* Render::isViewMoving: return if view is moving by timer */
 bool Render::isViewMoving()
 {
-   if (m_viewMoveTime > 0.0 && (m_currentRot != m_rot || m_currentTrans != m_trans || m_currentDistance != m_distance || m_currentFovy != m_fovy))
+   if (m_viewMoveTime > 0.0 && (m_currentRot != m_rot || m_currentTrans != m_trans_add || m_currentDistance != m_distance || m_currentFovy != m_fovy))
       return true;
    return false;
 }
@@ -849,7 +868,7 @@ void Render::jump(float height, float dist, float duration)
 /* Render::translate: translate */
 void Render::translate(float x, float y, float z)
 {
-   m_trans += btVector3(btScalar(x), btScalar(y), btScalar(z));
+   m_trans_add += btVector3(btScalar(x), btScalar(y), btScalar(z));
 }
 
 /* Render::rotate: rotate scene */

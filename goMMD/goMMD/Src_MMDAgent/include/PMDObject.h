@@ -52,24 +52,27 @@
 #define PMDOBJECT_MINSPINDIFF   0.000001f
 #define PMDOBJECT_SPINSPEEDRATE 0.95f     /* current * 0.95 + target * 0.05 */
 
-
 /* PMDObject: object of PMD */
 class PMDObject
 {
 private:
 
-   char *m_alias;                  /* alias */
-   PMDModel *m_pmd;                 /* model */
-   MotionManager *m_motionManager; /* motion manager */
+    char *m_alias;                  /* alias */
+    PMDModel *m_pmd;                 /* model */
+    MMDModel *m_model;              /* model: pmx, etc */
+    MotionManager *m_motionManager; /* motion manager */
+
     MMDAgent *m_mmdagent;       // MMDAgent
 
+    Option *m_option;
     BulletPhysics *m_bullet;        /* BulletPhysics object */
     BulletPhysics *m_localBullet;
     int m_usePhysicsSimulation; /* 0:none, 1:local, 2:global */
     int m_textureLib; /* disable model multiple shereMap */
-
-   LipSync *m_globalLipSync; /* lip sync */
-   LipSync *m_localLipSync;
+    SystemTexture *m_systex;
+    
+    LipSync *m_globalLipSync; /* lip sync */
+    LipSync *m_localLipSync;
 
    bool m_isEnable; /* true if this model is enabled */
 
@@ -81,6 +84,7 @@ private:
    PMDBone *m_baseBone;     /* parent bone when this is accessory */
    btVector3 m_origBasePos; /* offset when position is fixed */
 
+    bool m_forcedPosition;     /* force to set root bone offset */
    btVector3 m_offsetPos;      /* root bone offset for accessory or moving */
    btQuaternion m_offsetRot;   /* root bone rotation for accessory or moving */
    bool m_absPosFlag[3];       /* absolute position flag for accessory per each axis */
@@ -128,6 +132,12 @@ public:
               BulletPhysics *bullet, SystemTexture *systex, LipSync *sysLipSync,
               int usePhysicsSimulation, bool useCartoonRendering, int textureLib,
                void *voption);
+
+    /* PMDObject::load_pmd: load pmd model */
+    bool load_pmd(ScenarioData *_scenarioData);
+
+    /* PMDObject::load_pmd: load pmd model */
+    bool load_pmx(ScenarioData *_scenarioData);
 
     void setMMDAgent(MMDAgent *mmdagent);
     
@@ -179,6 +189,8 @@ public:
 
    /* getPMDModel: get PMDModel */
    PMDModel *getPMDModel();
+
+    MMDModel *getMMDModel();
 
    /* getMotionManager: get MotionManager */
    MotionManager *getMotionManager();

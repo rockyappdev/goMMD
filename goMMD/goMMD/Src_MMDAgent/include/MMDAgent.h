@@ -130,14 +130,15 @@
 
 class MMDAgent;
 
+#include "Option.h"
 #include "MMDAgent_utils.h"
 
 #include "TextRenderer.h"
 #include "LogText.h"
 #include "LipSync.h"
+
 #include "PMDObject.h"
 
-#include "Option.h"
 #include "ScreenWindow.h"
 #include "Message.h"
 #include "TileTexture.h"

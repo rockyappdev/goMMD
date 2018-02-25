@@ -50,6 +50,7 @@ void PMDObject::initialize()
    m_alias = NULL;
    m_motionManager = NULL;
     m_pmd = NULL;
+    m_model = NULL;
 
    m_globalLipSync = NULL;
    m_localLipSync = NULL;
@@ -96,17 +97,26 @@ void PMDObject::clear()
         delete m_pmd;
     }
 
+    if (m_model) {
+        delete m_model;
+    }
+
     if (m_localBullet) {
         delete m_localBullet;
     }
 
-   if (m_motionManager)
-      delete m_motionManager;
-   if (m_localLipSync)
-      delete m_localLipSync;
-   if(m_alias)
-      free(m_alias);
-   initialize();
+    if (m_motionManager) {
+        delete m_motionManager;
+    }
+    if (m_localLipSync) {
+        delete m_localLipSync;
+    }
+    if(m_alias) {
+        free(m_alias);
+
+    }
+
+    initialize();
 }
 
 /* PMDObject::PMDObject: constructor */
@@ -139,136 +149,201 @@ bool PMDObject::load(ScenarioData *_scenarioData, const char *alias, btVector3 *
                      int usePhysicsSimulation, bool useCartoonRendering, int textureLib,
                      void *voption)
 {
-   int i;
-
     if (_scenarioData == NULL || alias == NULL) return false;
     
-    Option *option = (Option*) voption;
-    
-    float *l = option->getLightDirection();
+    m_option = (Option*) voption;
+    float *l = m_option->getLightDirection();
     btVector3 light = btVector3(l[0], l[1], l[2]);
-
-   /* apply given parameters */
-   m_assignTo = assignObject;
-   m_baseBone = assignBone;
-
-    m_pmd = new PMDModel(m_mmdagent);
     
-   if (forcedPosition) {
-      /* set offset by given parameters */
-      if (offsetPos)
-         m_offsetPos = (*offsetPos);
-      if (offsetRot)
-         m_offsetRot = (*offsetRot);
-      m_pmd->getRootBone()->setOffset(&m_offsetPos);
-      m_pmd->getRootBone()->update();
-   } else {
-      /* set offset by root bone */
-      m_pmd->getRootBone()->getOffset(&m_offsetPos);
-   }
-
-   /* copy absolute position flag */
-   for (i = 0; i < 3; i++)
-      m_absPosFlag[i] = false;
-
-    NSLog(@"xxxxxxx PMDObject::load usePhysicsSimulation= [%d]", usePhysicsSimulation);
-    NSLog(@"xxxxxxx PMDObject::load textureLib= [%d]", textureLib);
-    NSLog(@"xxxxxxx PMDObject::load physicsFps= [%d]", option->getBulletFps());
-    
+    /* apply given parameters */
     m_usePhysicsSimulation = usePhysicsSimulation;
     m_textureLib = textureLib;
-
-   /* copy toon rendering flag */
-   m_useCartoonRendering = useCartoonRendering;
-
-   /* copy flag for motion file drop or all motion */
-   if(assignBone || assignObject)
-      m_allowMotionFileDrop = false;
-   else
-      m_allowMotionFileDrop = true;
-
-   /* save position when position is fixed */
-   if (m_baseBone) m_origBasePos = m_baseBone->getTransform()->getOrigin();
-
-   /* set alpha frame */
-   m_alphaAppearFrame = PMDOBJECT_ALPHAFRAME;
-   m_alphaDisappearFrame = 0.0;
-    m_pmd->setTextureLib(textureLib);
-
-   /* set comment frame */
-   m_displayCommentFrame = option->getDisplayCommentTime() * 30.0f;
-
+    m_systex = systex;
+    
+    /* copy toon rendering flag */
+    m_useCartoonRendering = useCartoonRendering;
+    
+    m_assignTo = assignObject;
+    m_baseBone = assignBone;
+    m_forcedPosition = forcedPosition;
+    /* set offset by given parameters */
+    if (offsetPos) m_offsetPos = (*offsetPos);
+    if (offsetRot) m_offsetRot = (*offsetRot);
+    /* copy absolute position flag */
+    for (int i = 0; i < 3; i++)
+        m_absPosFlag[i] = false;
+    
+    NSLog(@"xxxxxxx PMDObject::load usePhysicsSimulation= [%d]", m_usePhysicsSimulation);
+    NSLog(@"xxxxxxx PMDObject::load textureLib= [%d]", m_textureLib);
+    NSLog(@"xxxxxxx PMDObject::load physicsFps= [%d]", m_option->getBulletFps());
+    
+    /* save position when position is fixed */
+    if (m_baseBone) m_origBasePos = m_baseBone->getTransform()->getOrigin();
+    
+    /* set alpha frame */
+    m_alphaAppearFrame = PMDOBJECT_ALPHAFRAME;
+    m_alphaDisappearFrame = 0.0;
+    /* set comment frame */
+    m_displayCommentFrame = m_option->getDisplayCommentTime() * 30.0f;
+    
     if (m_usePhysicsSimulation == 0) {
         m_bullet = m_localBullet = NULL;
     } else if (m_usePhysicsSimulation == 1) {
         m_bullet = m_localBullet = new BulletPhysics();
-        m_bullet->setup(option->getBulletFps(), option->getGravityFactor());
+        m_bullet->setup(m_option->getBulletFps(), m_option->getGravityFactor());
     } else  {
         m_bullet = bullet;
     }
-
-    /* load model */
-    if (m_pmd->load(_scenarioData, m_bullet, systex) == false) {
+    
+    /* copy flag for motion file drop or all motion */
+    if(m_baseBone || m_assignTo)
+        m_allowMotionFileDrop = false;
+    else
+        m_allowMotionFileDrop = true;
+    
+    /* set alias */
+    setAlias(alias);
+    
+    /* reset */
+    setLightForToon(&light);
+    m_moveSpeed = -1.0f;
+    m_spinSpeed = -1.0f;
+    
+    NSString *modelPath = [_scenarioData getCurrentModelPath];
+    NSString *modelExt = [_scenarioData getCurrentModelExt];
+    if ([modelExt isEqualToString:@"pmd"]) {
+        if (!load_pmd(_scenarioData)) {
+            clear();
+            return false;
+        }
+        return true;
+    } else if ([modelExt isEqualToString:@"pmx"]) {
+        if (!load_pmx(_scenarioData)) {
+            clear();
+            return false;
+        }
+        return true;
+    } else {
+        // unsupported model file extension
+        NSLog(@"*** Error: unsupported model data [%@]", modelPath);
         clear();
         return false;
     }
+    
+}
 
-    m_pmd->setUsePhysicsSimulation(usePhysicsSimulation > 0);
+/* PMDObject::load_pmd: load pmd model */
+bool PMDObject::load_pmd(ScenarioData *_scenarioData)
+{
+    m_pmd = new PMDModel(m_mmdagent);
 
-   /* set toon rendering flag */
-   m_pmd->setToonFlag(useCartoonRendering);
-
-   /* set edge width */
-   m_pmd->setEdgeThin(option->getCartoonEdgeWidth());
-
-   /* load lip sync */
+    if (m_forcedPosition) {
+        m_pmd->getRootBone()->setOffset(&m_offsetPos);
+        m_pmd->getRootBone()->update();
+    } else {
+        /* set offset by root bone */
+        m_pmd->getRootBone()->getOffset(&m_offsetPos);
+    }
+    
+    m_pmd->setTextureLib(m_textureLib);
+    
+    /* load model */
+    if (m_pmd->load(_scenarioData, m_bullet, m_systex) == false) {
+        clear();
+        return false;
+    }
+    
+    m_pmd->setUsePhysicsSimulation(m_usePhysicsSimulation > 0);
+    
+    /* set toon rendering flag */
+    m_pmd->setToonFlag(m_useCartoonRendering);
+    
+    /* set edge width */
+    m_pmd->setEdgeThin(m_option->getCartoonEdgeWidth());
+    
+    /* load lip sync */
     /******** not supported this time
-   m_globalLipSync = sysLipSync;
-   if(m_localLipSync != NULL)
-      delete m_localLipSync;
-   m_localLipSync = NULL;
-   lip = new LipSync();
-   len = MMDAgent_strlen(fileName);
-   if(len < 5) {
-      delete lip;
-   } else {
-      buf = MMDAgent_strdup(fileName);
-      buf[len - 4] = '.';
-      buf[len - 3] = 'l';
-      buf[len - 2] = 'i';
-      buf[len - 1] = 'p';
-      if(lip->load(buf) == true) {
-         m_localLipSync = lip;
-      } else
-         delete lip;
-      if(buf)
-         free(buf);
-   }
+     m_globalLipSync = sysLipSync;
+     if(m_localLipSync != NULL)
+     delete m_localLipSync;
+     m_localLipSync = NULL;
+     lip = new LipSync();
+     len = MMDAgent_strlen(fileName);
+     if(len < 5) {
+     delete lip;
+     } else {
+     buf = MMDAgent_strdup(fileName);
+     buf[len - 4] = '.';
+     buf[len - 3] = 'l';
+     buf[len - 2] = 'i';
+     buf[len - 1] = 'p';
+     if(lip->load(buf) == true) {
+     m_localLipSync = lip;
+     } else
+     delete lip;
+     if(buf)
+     free(buf);
+     }
      **********/
     
-   /* set alias */
-   setAlias(alias);
+    /* set temporarily all body to Kinematic */
+    /* this is fixed at first simulation */
+    skipNextSimulation();
+    
+    /* enable */
+    m_isEnable = true;
+    
+    return true;
+}
 
-   /* reset */
-   setLightForToon(&light);
-   m_moveSpeed = -1.0f;
-   m_spinSpeed = -1.0f;
+/* PMDObject::load_pmd: load pmd model */
+bool PMDObject::load_pmx(ScenarioData *_scenarioData)
+{
+    m_model = new MMDModel(m_mmdagent);
 
-   /* set temporarily all body to Kinematic */
-   /* this is fixed at first simulation */
-   skipNextSimulation();
-
-   /* enable */
-   m_isEnable = true;
-
-   return true;
+    if (m_forcedPosition) {
+        m_model->getRootBone()->setOffset(&m_offsetPos);
+        m_model->getRootBone()->update();
+    } else {
+        /* set offset by root bone */
+        m_model->getRootBone()->getOffset(&m_offsetPos);
+    }
+    
+    m_model->setTextureLib(m_textureLib);
+    
+    /* load model */
+    if (m_model->load(_scenarioData, m_bullet, m_systex) == false) {
+        clear();
+        return false;
+    }
+    
+    m_model->setUsePhysicsSimulation(m_usePhysicsSimulation > 0);
+    
+    /* set toon rendering flag */
+    m_model->setToonFlag(m_useCartoonRendering);
+    
+    /* set edge width */
+    m_model->setEdgeThin(m_option->getCartoonEdgeWidth());
+    
+    /* set temporarily all body to Kinematic */
+    /* this is fixed at first simulation */
+    skipNextSimulation();
+    
+    /* enable */
+    m_isEnable = true;
+    
+    return true;
 }
 
 /* PMDObject::skipNextSimulation: skip next physics simulation */
 void PMDObject::skipNextSimulation()
 {
-   m_needResetKinematic = true;
-   m_pmd->setPhysicsControl(false);
+    m_needResetKinematic = true;
+    
+    if (m_pmd)
+        m_pmd->setPhysicsControl(false);
+    if (m_model)
+        m_model->setPhysicsControl(false);
 }
 
 /* PMDObject::setMotion: start a motion */
@@ -276,9 +351,13 @@ bool PMDObject::startMotion(VMD * vmd, const char *name, bool full, bool once, b
 {
    if (m_motionManager == NULL || m_motionManager->startMotion(vmd, name, full, once, enableSmooth, enableRepos, priority) == false)
       return false;
-   if (enableRepos)
-      m_pmd->getRootBone()->getOffset(&m_offsetPos);
-
+    if (enableRepos) {
+        if (m_pmd)
+            m_pmd->getRootBone()->getOffset(&m_offsetPos);
+        if (m_model)
+            m_model->getRootBone()->getOffset(&m_offsetPos);
+    }
+    
    return true;
 }
 
@@ -304,9 +383,16 @@ void PMDObject::rewindMotion()
 {
     int i;
     
-    m_pmd->getRootBone()->setOffset(&m_offsetPos);
-    m_pmd->getRootBone()->update();
-    
+    if (m_pmd) {
+        m_pmd->getRootBone()->setOffset(&m_offsetPos);
+        m_pmd->getRootBone()->update();
+    }
+
+    if (m_model) {
+        m_model->getRootBone()->setOffset(&m_offsetPos);
+        m_model->getRootBone()->update();
+    }
+
     /* copy absolute position flag */
     for (i = 0; i < 3; i++)
         m_absPosFlag[i] = false;
@@ -318,9 +404,16 @@ void PMDObject::rewindMotion()
 void PMDObject::restartMotion()
 {
     int i;
+
+    if (m_pmd) {
+        m_pmd->getRootBone()->setOffset(&m_offsetPos);
+        m_pmd->getRootBone()->update();
+    }
     
-    m_pmd->getRootBone()->setOffset(&m_offsetPos);
-    m_pmd->getRootBone()->update();
+    if (m_model) {
+        m_model->getRootBone()->setOffset(&m_offsetPos);
+        m_model->getRootBone()->update();
+    }
     
     /* copy absolute position flag */
     for (i = 0; i < 3; i++)
@@ -335,7 +428,7 @@ void PMDObject::updateRootBone()
 {
    btVector3 pos;
    btVector3 posAbs;
-   PMDBone *b;
+   PMDBone *b = NULL;
    btTransform tr;
 
    if (!m_baseBone) return;
@@ -349,7 +442,11 @@ void PMDObject::updateRootBone()
    if (m_absPosFlag[2]) pos.setZ(posAbs.z());
 
    /* set root bone */
-   b = m_pmd->getRootBone();
+    if (m_pmd)
+        b = m_pmd->getRootBone();
+    if (m_model)
+        b = m_model->getRootBone();
+    
    b->setCurrentPosition(&pos);
    b->setCurrentRotation(&m_offsetRot);
    b->update();
@@ -366,10 +463,22 @@ bool PMDObject::updateMotion(double deltaFrame)
    if (m_isEnable == false || m_motionManager == NULL) return false;
 
    /* set rotation and position to bone and face from motion */
-   m_pmd->resetBone();  /* reset bone position */
-   ret = m_motionManager->update(deltaFrame); /* set from motion */
-   m_pmd->updateBone(); /* update bone, IK, and rotation */
-   m_pmd->updateFace(); /* update face */
+    if (m_pmd)
+        m_pmd->resetBone();  /* reset bone position */
+    if (m_model)
+        m_model->resetBone();  /* reset bone position */
+
+    ret = m_motionManager->update(deltaFrame); /* set from motion */
+    
+    if (m_pmd) {
+        m_pmd->updateBone(); /* update bone, IK, and rotation */
+        m_pmd->updateFace(); /* update face */
+    }
+
+    if (m_model) {
+        m_model->updateBone(); /* update bone, IK, and rotation */
+        m_model->updateFace(); /* update face */
+    }
 
    /* update comment frame */
    if (m_displayCommentFrame > 0.0f) {
@@ -390,8 +499,11 @@ void PMDObject::updateAfterSimulation(bool physicsEnabled)
    if (m_needResetKinematic) {
       //if (physicsEnabled) m_pmd->setPhysicsControl(true);
 
-       m_pmd->setPhysicsControl(physicsEnabled);
-      
+       if (m_pmd)
+           m_pmd->setPhysicsControl(physicsEnabled);
+       if (m_model)
+           m_model->setPhysicsControl(physicsEnabled);
+
        m_needResetKinematic = false;
    }
    /* apply calculation result to bone */
@@ -404,8 +516,14 @@ void PMDObject::updateSkin()
    if (m_isEnable == false) return;
 
    /* update skin and toon */
-   m_pmd->setToonLight(&m_lightDir);
-   m_pmd->updateSkin();
+    if (m_pmd) {
+        m_pmd->setToonLight(&m_lightDir);
+        m_pmd->updateSkin();
+    }
+    if (m_model) {
+        m_model->setToonLight(&m_lightDir);
+        m_model->updateSkin();
+    }
 }
 
 /* PMDObject::updateAlpha: update global model alpha */
@@ -413,11 +531,14 @@ bool PMDObject::updateAlpha(double deltaFrame)
 {
    bool ended = false;
 
-   if (m_alphaAppearFrame > 0.0f) {
-      m_alphaAppearFrame -= deltaFrame;
-      if (m_alphaAppearFrame < 0.0f)
-         m_alphaAppearFrame = 0.0f;
-      m_pmd->setGlobalAlpha((float)(1.0 - m_alphaAppearFrame / PMDOBJECT_ALPHAFRAME));
+    if (m_alphaAppearFrame > 0.0f) {
+        m_alphaAppearFrame -= deltaFrame;
+        if (m_alphaAppearFrame < 0.0f)
+            m_alphaAppearFrame = 0.0f;
+        if (m_pmd)
+            m_pmd->setGlobalAlpha((float)(1.0 - m_alphaAppearFrame / PMDOBJECT_ALPHAFRAME));
+        if (m_model)
+            m_model->setGlobalAlpha((float)(1.0 - m_alphaAppearFrame / PMDOBJECT_ALPHAFRAME));
    }
    if (m_alphaDisappearFrame > 0.0f) {
       m_alphaDisappearFrame -= deltaFrame;
@@ -425,7 +546,11 @@ bool PMDObject::updateAlpha(double deltaFrame)
          m_alphaDisappearFrame = 0.0f;
          ended = true; /* model was deleted */
       }
-      m_pmd->setGlobalAlpha((float) (m_alphaDisappearFrame / PMDOBJECT_ALPHAFRAME));
+       
+       if (m_pmd)
+           m_pmd->setGlobalAlpha((float) (m_alphaDisappearFrame / PMDOBJECT_ALPHAFRAME));
+       if (m_model)
+           m_model->setGlobalAlpha((float) (m_alphaDisappearFrame / PMDOBJECT_ALPHAFRAME));
    }
    return ended;
 }
@@ -447,7 +572,7 @@ void PMDObject::setLightForToon(btVector3 * v)
 bool PMDObject::updateModelRootOffset(float fps)
 {
    bool ret = false;
-   PMDBone *b;
+   PMDBone *b = NULL;
    btVector3 pos, pos2;
    float diff;
    float maxStep;
@@ -455,7 +580,10 @@ bool PMDObject::updateModelRootOffset(float fps)
    if (m_isEnable == false) return false;
 
    /* get root bone */
-   b = m_pmd->getRootBone();
+    if (m_pmd)
+        b = m_pmd->getRootBone();
+    if (m_model)
+        b = m_model->getRootBone();
 
    /* target position is m_offsetPos */
    /* move offset of root bone closer to m_offsetPos */
@@ -485,8 +613,15 @@ bool PMDObject::updateModelRootOffset(float fps)
          pos2 = m_offsetPos;
          ret = true;
       }
-      m_pmd->getRootBone()->setOffset(&pos2);
-      m_pmd->getRootBone()->update();
+       
+       if (m_pmd) {
+           m_pmd->getRootBone()->setOffset(&pos2);
+           m_pmd->getRootBone()->update();
+       }
+       if (m_model) {
+           m_model->getRootBone()->setOffset(&pos2);
+           m_model->getRootBone()->update();
+       }
    }
 
    return ret;
@@ -496,7 +631,7 @@ bool PMDObject::updateModelRootOffset(float fps)
 bool PMDObject::updateModelRootRotation(float fps)
 {
    btQuaternion tmpRot;
-   PMDBone *b;
+   PMDBone *b = NULL;
    bool ret = false;
    btQuaternion r;
    float diff;
@@ -507,7 +642,11 @@ bool PMDObject::updateModelRootRotation(float fps)
    m_isRotating = false;
 
    /* get root bone */
-   b = m_pmd->getRootBone();
+    if (m_pmd)
+        b = m_pmd->getRootBone();
+    if (m_model)
+        b = m_model->getRootBone();
+
    /* target rotation is m_offsetRot */
    /* turn rotation of root bone closer to m_offsetRot */
    b->getCurrentRotation(&r);
@@ -566,6 +705,11 @@ void PMDObject::setAlias(const char *alias)
 PMDModel *PMDObject::getPMDModel()
 {
    return m_pmd;
+}
+
+MMDModel *PMDObject::getMMDModel()
+{
+    return m_model;
 }
 
 /* PMDObject::getMotionManager: get MotionManager */
