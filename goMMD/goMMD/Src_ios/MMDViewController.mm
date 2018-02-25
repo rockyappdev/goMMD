@@ -943,43 +943,51 @@
                     if ((ixangle >= 0 && ixangle <= 1) || (ixangle >= 6 && ixangle <= 7)) {
                         // screen front(south) back(north) left(west) right(east) top(top) bottom(bottom)
                         if (abs(diffx) > abs(diffy)) {
-                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffx) > 20) {
+                            if (endTouchTime - startTouchTime <= 0.25 && abs(diffx) > 20) {
                                 diffx += (diffx < 0 ? 30 : -30);
                                 rotateDy += -diffx * 0.005; //0.025;
                                 NSLog(@".....  rotateDy = [%f]", rotateDy);
                             } else {
                                 angley = 0.2*diffx;
                                 NSLog(@".....  angley = [%f]", angley);
+                                // stop auto rotation
+                                rotateDx = rotateDy = rotateDz = 0.0;
                             }
                         } else {
-                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffy) > 20) {
+                            if (endTouchTime - startTouchTime <= 0.25 && abs(diffy) > 20) {
                                 diffy += (diffy < 0 ? 40 : -40);
                                 rotateDx += -diffy * 0.005; // 0.015;
                                 NSLog(@".....  rotateDx = [%f]", rotateDx);
                             } else {
                                 anglex = 0.2*diffy;
                                 NSLog(@".....  anglex = [%f]", anglex);
+                                // stop auto rotation
+                                rotateDx = rotateDy = rotateDz = 0.0;
                             }
                         }
                     } else {
                         // screen front(north) back(south) left(west) right(east) top(bottom) bottom(top)
                         if (abs(diffx) > abs(diffy)) {
-                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffx) > 20) {
+                            if (endTouchTime - startTouchTime <= 0.25 && abs(diffx) > 20) {
                                 diffx += (diffx < 0 ? 30 : -30);
                                 rotateDy += -diffx * 0.005; //0.025;
                                 NSLog(@".....  rotateDy = [%f]", rotateDy);
                             } else {
                                 angley = 0.2*diffx;
                                 NSLog(@".....  angley = [%f]", angley);
+                                // stop auto rotation
+                                rotateDx = rotateDy = rotateDz = 0.0;
                             }
                         } else {
-                            if (endTouchTime - startTouchTime <= 0.3 && abs(diffy) > 20) {
+                            if (endTouchTime - startTouchTime <= 0.25 && abs(diffy) > 20) {
                                 diffy += (diffy < 0 ? 40 : -40);
                                 rotateDx += -diffy * 0.005; // 0.015;
                                 NSLog(@".....  rotateDx = [%f]", rotateDx);
                             } else {
                                 anglex = 0.2*diffy;
                                 NSLog(@".....  anglex = [%f]", anglex);
+                                // stop auto rotation
+                                rotateDx = rotateDy = rotateDz = 0.0;
                             }
                         }
                     }
