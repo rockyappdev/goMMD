@@ -381,6 +381,10 @@
     [modelDict setObject:@"0.00" forKey:@"rotationX"];
     [modelDict setObject:@"0.00" forKey:@"rotationY"];
     [modelDict setObject:@"0.00" forKey:@"rotationZ"];
+    [modelDict setObject:@"0.00" forKey:@"centerX"];
+    [modelDict setObject:@"0.00" forKey:@"centerY"];
+    [modelDict setObject:@"0.00" forKey:@"centerZ"];
+    [modelDict setObject:@"1.00" forKey:@"aspect"];
 
     [_scenarioInfoModelList addObject:modelDict];
     

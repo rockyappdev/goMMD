@@ -39,6 +39,9 @@
     float     lookatDX;
     float     lookatDY;
     float     lookatDZ;
+    float     centerX;
+    float     centerY;
+    float     centerZ;
     
 }
 
@@ -67,6 +70,9 @@
 @property (nonatomic,assign) float    lookatDX;
 @property (nonatomic,assign) float    lookatDY;
 @property (nonatomic,assign) float    lookatDZ;
+@property (nonatomic,assign) float    centerX;
+@property (nonatomic,assign) float    centerY;
+@property (nonatomic,assign) float    centerZ;
 
 -(NSInteger)numberOfSectionsInScenarioList;
 -(NSInteger)numberOfRowsInSectionOfScenarioList:(NSInteger)section;
