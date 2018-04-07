@@ -118,7 +118,7 @@ bool MMDModel::parsePMX(const unsigned char *data, unsigned long size, ScenarioD
     
     NSLog(@"... MMDModel::parsePMX m_textureLib = [%d]", m_textureLib);
     
-    scene = importer.ReadFileFromMemory(data, size,
+    m_scene = m_importer.ReadFileFromMemory(data, size,
                                         aiProcess_Triangulate
                                         | aiProcess_FlipUVs
                                         | aiProcess_JoinIdenticalVertices
@@ -126,14 +126,14 @@ bool MMDModel::parsePMX(const unsigned char *data, unsigned long size, ScenarioD
                                         | aiProcess_LimitBoneWeights
                                         | aiProcess_RemoveRedundantMaterials
                                         );
-    if (scene == NULL) {
+    if (m_scene == NULL) {
         NSLog(@"*** MMDModel::load Failed to importer.ReadFileFromMemory() for [%@]", [_scenarioData getCurrentModelPath]);
         return false;
     }
     
 
     /* name */
-    m_name = scene->mRootNode->mName.C_Str();
+    m_name = m_scene->mRootNode->mName.C_Str();
     NSLog(@"... MMDModel::parsePMX: model=[%s]", m_name.c_str());
 
     m_latmiku = false;

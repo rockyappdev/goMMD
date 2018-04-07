@@ -65,16 +65,16 @@ class MMDModel
 private:
 
     // the global Assimp scene object
-    const aiScene* scene = NULL;
-    GLuint scene_list = 0;
-    aiVector3D scene_min, scene_max, scene_center;
+    const aiScene* m_scene = NULL;
+    GLuint m_scene_list = 0;
+    aiVector3D m_scene_min, m_scene_max, m_scene_center;
     
     // images / texture
     //std::map<std::string, GLuint*> textureIdMap;    // map image filenames to textureIds
-    GLuint*        textureIds;                            // pointer to texture Array
+    GLuint*        m_textureIds;                            // pointer to texture Array
     
     // Create an instance of the Importer class
-    Assimp::Importer importer;
+    Assimp::Importer m_importer;
 
    /* model definition */
    std::string  m_name;    /* model name */
